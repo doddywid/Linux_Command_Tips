@@ -1,0 +1,40 @@
+#Header
+So this is the Ubuntu netplan config for "autolasthop" requirement.
+By autolasthop, I mean the situation where a host has multiple network interface and you need the host to send reply for packet destined to it based on where it came from.
+This leverage routing policy on linux.
+On this snipped, here is the sample situation:
+- Linux host has two NICs: ens32 and ens33
+- ens32 is assigned IP address of 10.52.34.104/27 and ens33 is assigned IP address of 10.52.34.74/29
+- whenever there is request coming to 10.52.34.104, it is required for host to send reply back via ens32, and
+- whenever there is request coming to 10.52.34.74, it is required for host to send reply back via ens33
+- this requirement need to not impact to default route that the host need to have (via ens33 in this case)
+
+## Netplan config line starts below
+network:
+  ethernets:
+    ens32:
+      addresses:
+      - 10.52.34.104/27
+      routing-policy:
+      - from: 10.52.34.104
+        table: 32
+      routes:
+      - to: 0.0.0.0/0
+        via: 10.52.34.126
+        table: 32
+        on-link: True
+    ens33:
+      addresses:
+      - 10.52.34.74/29
+      gateway4: 10.52.34.73
+      routing-policy:
+      - from: 10.52.34.74
+        table: 33
+      routes:
+      - to: 0.0.0.0/0
+        via: 10.52.34.73
+        table: 33
+        on-link: True
+      nameservers:
+        addresses:
+        - 8.8.8.8
