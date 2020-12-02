@@ -1,0 +1,21 @@
+#Header
+Here is tips for curl command
+
+##1. Resolve host
+   When you need to send curl to a destination host where you dont have the resolve obtained from DNS or saved on host files
+#### # curl https://minigames.duniagames.co.id/games/es_nusantara/sw.js -H 'Host: minigames.duniagames.co.id' --resolve minigames.duniagames.co.id:443:104.18.94.107
+
+##2. Curl with statistics result
+
+Save this snippet below as curl-format.txt
+    time_namelookup:  %{time_namelookup}s\n
+       time_connect:  %{time_connect}s\n
+    time_appconnect:  %{time_appconnect}s\n
+   time_pretransfer:  %{time_pretransfer}s\n
+      time_redirect:  %{time_redirect}s\n
+ time_starttransfer:  %{time_starttransfer}s\n
+                    ----------\n
+         time_total:  %{time_total}s\n
+
+Usage as follow
+#### # curl -w "@curl-format.txt" -o /dev/null -s 192.168.101.36:9002/myapi/price/1001
