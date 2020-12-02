@@ -1,0 +1,114 @@
+#Header
+This is tips for simple subrequest implementation using NGINX
+
+# .conf file 
+js_include conf.d/batch-api-min.js;
+
+keyval_zone zone=batch_api:64k state=/var/lib/nginx/state/batch-api.json;
+keyval $uri_prefix $batch_api zone=batch_api;
+keyval_zone zone=batch_api2:64k state=/var/lib/nginx/state/batch-api2.json;
+keyval $uri $batch_api2 zone=batch_api2;
+
+error_log /var/log/nginx/myapi_error.log info;
+access_log /var/log/nginx/myapi_access.log;
+
+map $uri $uri_prefix {
+    ~^(?<p>.+)\/.+$ $p;
+}
+
+map $uri $uri_suffix {
+    ~^.+\/(?<s>.+)$ $s;
+}
+upstream api_servers {
+    least_conn;
+    zone api_servers 64k;
+    server 192.168.101.12:9000;
+}
+server {
+    listen 9000;
+
+    set $batchapi_verbose on;
+    default_type application/json;
+
+    location /batch-api {
+        set $batch_api_arg_in_uri on;
+        js_content batchAPI;
+    }
+
+    location /batch-api2 {
+        set $batch_api_arg_in_uri off;
+        js_content batchAPI;
+    }
+
+    location /myapi {
+        proxy_pass http://api_servers;
+    }
+
+    location /api {
+        api write=on;
+    }
+}
+
+
+## batch-api-min.js
+
+/*******************************************************************************
+* Copyright (C) 2019 NGINX, Inc.
+* This program is provided for demonstration purposes only.
+*******************************************************************************/
+function batchAPI(r) {
+    var n = 0, requestCount = 0;
+    var resp = "{";
+    var errorOccured = false;
+    var keyval = "batch_api";
+
+    function done(reply) { // Callback for completed subrequests
+        n++;
+        if (errorOccured) { /* Once one response has an error stop processing
+                               any more responses */
+            return;
+        }
+        if (n < requestCount) {
+            if (reply.status != 200) {
+                errorOccured = true;
+                r.log("Error in response " + n.toString() + " " + reply.uri + "
+" + reply.status.toString());
+                r.return(reply.status, "Error in response " + n.toString() + " "
+ + reply.uri + "\n");
+            } else {
+                resp += '"' + reply.uri + '": ' + reply.responseBody + ',';
+            }
+        } else { // Last response
+            if (reply.status != 200) {
+                errorOccured = true;
+                r.log("Error in response " + n.toString() + " " + reply.uri + "
+" + reply.status.toString());
+                r.return(reply.status, "Error in response " + n.toString() + " "
+ + reply.uri + "\n");
+            } else {
+                resp += '"' + reply.uri + '": ' + reply.responseBody + '}' ;
+                r.return(200, resp);
+            }
+        }
+    }
+
+    var argInURI = r.variables.batch_api_arg_in_uri.toLowerCase();
+    if (argInURI != "on") {
+        keyval = "batch_api2";
+    }
+
+    var apiURIs = r.variables[keyval].split(",");
+    requestCount = apiURIs.length;
+    for (var i = 0; i < requestCount; i++) {
+        if (argInURI == "on") {
+            r.subrequest(apiURIs[i] + "/" + r.variables.uri_suffix,
+                         r.variables.args, done);
+        } else {
+            r.subrequest(apiURIs[i], r.variables.args, done);
+        }
+    }
+}
+
+## Curl command for submitting keyval
+curl -iX POST -d '{"/batch-api/product":"/myapi/login,/myapi/purchase,/myapi/price"}' http://localhost:9000/api/3/http/keyvals/batch_api
+curl -iX POST -d '{"/batch-api2/product":"/login.php,/purchase.php,/price.php"}' http://localhost:9000/api/3/http/keyvals/batch_api2
