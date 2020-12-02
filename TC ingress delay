@@ -1,0 +1,28 @@
+#Header
+By default, linux TC will apply policy on egress side (although some of them not, e.g. Ubuntu :) )
+This tips is workaround for TC simulated delay to be applied in ingress side of a NIC. Enjoy :)
+
+##Shell script snippet for simulate_delay.sh starts below
+#!/bin/sh
+IF=$1
+DELAY=$2
+DV=$3
+IFN=ifb$(echo $IF | tr -dc '0-9')
+
+modprobe ifb numifbs=4
+ip link set dev $IFN up
+tc qdisc add dev $IF handle ffff: ingress
+tc filter add dev $IF parent ffff: protocol ip u32 match u32 0 0 action mirred e
+gress redirect dev $IFN
+tc qdisc add dev $IFN root netem delay $DELAY $DV
+
+##Shell script snippet for remove_delay.sh starts below
+#!/bin/sh
+IF=$1
+IFN=ifb$(echo $IF | tr -dc '0-9')
+
+tc qdisc del dev $IFN root
+tc filter del dev $IF parent ffff:
+tc qdisc del dev $IF handle ffff: ingress
+ip link set dev $IFN down
+modprobe -r ifb
