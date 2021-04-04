@@ -1,0 +1,24 @@
+This tip is to automate reverse ssh tunnel using autossh and utilize systemd.
+Refer to https://github.com/doddywid/Linux_Command_Tips/blob/main/reverse_ssh_tunnel for scenario & diagram.
+
+Install autossh
+  sudo apt install autossh
+  
+Create below file at /etc/systemd/system/autossh22.service
+==========================================================
+[Unit]
+Description=AutoSSH to My VPS for port 22
+After=network.target
+
+[Service]
+Environment="AUTOSSH_GATETIME=0"
+ExecStart=/usr/bin/autossh -N -M 0 -o "ExitOnForwardFailure=yes" -o "ServerAliveInterval=180" -o "ServerAliveCountMax=3" -o "PubkeyAuthentication=yes" -o "PasswordAuthentication=no" -i /home/userid/.ssh/id_rsa -R 19999:localhost:22 root@ip_addr_B -p ssh_port_B
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+==========================================================
+
+Once finished, run below
+  sudo systemctl enable autossh22.service
+  sudo systemctl start autossh22.service
