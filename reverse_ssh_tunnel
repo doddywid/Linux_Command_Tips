@@ -1,0 +1,18 @@
+Reverse SSH tunnel command cheatsheet
+
+|=================|                                   |===================|                  |================|
+| Home_Server (A) |====(internet (restricted NAT))====| Public Server (B) |==(any internet)==| Any Client (C) |
+|=================|                                   |===================|                  |================|
+
+Goal: when C hit B at port 19999, B will forward to A port 22
+
+At A:  
+  ssh -NR 19999:localhost:22 root@ip_addr_B
+
+At B:
+  Add below lines to /etc/ssh/sshd_config
+    AllowTcpForwarding yes
+    GatewayPorts yes
+
+At C:
+  ssh user_A@ip_addr_B
