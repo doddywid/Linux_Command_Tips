@@ -1,4 +1,5 @@
-Reverse SSH tunnel command cheatsheet
+Reverse SSH tunnel command cheatsheet.
+Refer to https://github.com/doddywid/Linux_Command_Tips/blob/main/autossh_systemd_script for automating it using autossh and systemd.
 
 |=================|                                   |===================|                  |================|
 | Home_Server (A) |====(internet (restricted NAT))====| Public Server (B) |==(any internet)==| Any Client (C) |
