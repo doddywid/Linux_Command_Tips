@@ -16,4 +16,4 @@ At B:
     GatewayPorts yes
 
 At C:
-  ssh user_A@ip_addr_B
+  ssh user_A@ip_addr_B -p 19999
