@@ -1,6 +1,12 @@
 sudo apt install certbot python-certbot-nginx
 sudo apt install certbot python3-certbot-nginx python3-certbot
 
+use snap for better bundle
+==========================
+snap install --classic certbot
+certbot --nginx -d doddywid.com,www.doddywid.com,k8s.doddywid.com,volterra.doddywid.com
+ln -s /snap/bin/certbot /usr/bin/certbot
+
 sudo systemctl status certbot.service
 sudo systemctl status certbot.timer
 sudo certbot --nginx -d doddywid.com
