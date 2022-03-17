@@ -1,0 +1,13 @@
+On host:
+========
+# sudo virsh domblklist ubuntu1
+# sudo qemu-img info /var/lib/libvirt/images/ubuntu1.qcow2
+# sudo qemu-img resize /var/lib/libvirt/images/ubuntu1.qcow2 +10G
+
+On guest:
+=========
+# lsblk
+# cfdisk (resize through menu)
+# pvresize /dev/vda3
+# lvresize -l +100%FREE /dev/mapper/ubuntu--vg-ubuntu--lv
+# resize2fs /dev/mapper/ubuntu--vg-ubuntu--lv
